@@ -1,0 +1,49 @@
+# IDEAL MARRIAGE CENTER — idlmatch.com
+User-agent: *
+Allow: /
+
+# Private, member-only and non-content areas
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile/
+Disallow: /profile
+Disallow: /favorites
+Disallow: /threads
+Disallow: /messages
+Disallow: /photos/
+Disallow: /interests/
+Disallow: /blocks/
+Disallow: /reports/
+Disallow: /saved-searches
+Disallow: /login
+Disallow: /register/otp
+Disallow: /password/
+Disallow: /forgot-password
+Disallow: /confirm-password
+Disallow: /verify-email
+Disallow: /logout
+Disallow: /auth/
+Disallow: /install
+Disallow: /api/
+Disallow: /livewire/
+Disallow: /_ignition/
+Disallow: /symlink.php
+Disallow: /mg_debug.php
+Disallow: /dg2.php
+Disallow: /admin2/
+Disallow: /aiagent/
+Disallow: /*?*sort=
+Disallow: /*?*page=0
+
+# Search result pages are indexed once, at the clean URL
+Allow: /search
+
+# Crawlers that must not load member biodata pages
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+Disallow: /profiles/
+
+Sitemap: https://idlmatch.com/sitemap.xml

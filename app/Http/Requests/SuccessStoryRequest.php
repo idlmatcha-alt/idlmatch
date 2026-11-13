@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class SuccessStoryRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules()
+    {
+        return [
+            'couple_names' => ['required', 'string', 'max:120'],
+            'story' => ['required', 'string', 'max:5000'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
+            'website' => ['nullable', 'max:0'],
+        ];
+    }
+}

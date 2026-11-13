@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDLMatch Admin Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0612;--surface:#120d1e;--surface2:#1a1030;--surface3:#221440;
+  --accent:#c8a84b;--accent2:#d4af37;--accent-glow:rgba(200,168,75,0.3);
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--orange:#f39c12;
+  --text:#e8e4f0;--text2:#9d94b0;--text3:#5a5270;
+  --border:rgba(200,168,75,0.15);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden}
+
+/* LOGIN */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;
+  background:radial-gradient(ellipse at center, #1a0a3e 0%, #0a0612 70%);
+}
+.login-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:48px 44px;width:420px;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 60px var(--accent-glow);
+}
+.login-logo{font-size:48px;margin-bottom:16px}
+.login-title{font-size:24px;font-weight:800;color:var(--accent);margin-bottom:4px}
+.login-sub{color:var(--text2);font-size:14px;margin-bottom:32px}
+.login-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;color:var(--text);font-size:15px;outline:none;margin-bottom:14px;
+  transition:border-color .2s;font-family:'Inter',sans-serif;
+}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{
+  width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:12px;padding:14px;color:#1a0a0a;font-weight:700;
+  font-size:16px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+}
+.login-btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 8px 25px var(--accent-glow)}
+.login-error{color:var(--red);font-size:13px;margin-top:10px;display:none}
+
+/* LAYOUT */
+#app{display:none;height:100vh;display:none;grid-template-columns:280px 1fr;grid-template-rows:60px 1fr}
+#app.visible{display:grid}
+
+/* TOP BAR */
+#topbar{
+  grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:16px;
+}
+.topbar-logo{font-size:22px;font-weight:800;color:var(--accent);margin-right:auto;display:flex;align-items:center;gap:10px}
+.topbar-logo-icon{font-size:28px}
+.topbar-site{font-size:12px;color:var(--text2);background:var(--surface2);padding:4px 10px;border-radius:6px;border:1px solid var(--border)}
+.topbar-status{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#logout-btn{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);color:var(--red);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;transition:.2s;font-family:'Inter',sans-serif}
+#logout-btn:hover{background:rgba(231,76,60,.3)}
+
+/* SIDEBAR */
+#sidebar{
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-stats{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--accent)}
+.stat-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+.sidebar-section-label{padding:8px 16px 4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+
+#session-list{flex:1;overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.session-item{
+  background:var(--surface2);border:1px solid transparent;border-radius:10px;
+  padding:10px 12px;cursor:pointer;transition:all .15s;
+}
+.session-item:hover{border-color:var(--border);background:var(--surface3)}
+.session-item.active{border-color:var(--accent);background:rgba(200,168,75,.08)}
+.session-item.escalated{border-left:3px solid var(--red)}
+.session-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.session-name{font-size:13px;font-weight:600;color:var(--text)}
+.session-time{font-size:10px;color:var(--text3)}
+.session-preview{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase}
+.badge-escalated{background:rgba(231,76,60,.2);color:var(--red);border:1px solid rgba(231,76,60,.3)}
+.badge-human{background:rgba(52,152,219,.2);color:var(--blue);border:1px solid rgba(52,152,219,.3)}
+.badge-lead{background:rgba(46,204,113,.2);color:var(--green);border:1px solid rgba(46,204,113,.3)}
+
+/* MAIN PANEL */
+#main-panel{display:grid;grid-template-rows:1fr auto;overflow:hidden}
+#tab-bar{
+  display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 20px;
+}
+.tab{
+  padding:14px 20px;font-size:13px;font-weight:500;color:var(--text2);
+  cursor:pointer;border-bottom:2px solid transparent;transition:.2s;
+}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+
+.panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+.panel.active{display:flex}
+
+/* CHAT PANEL */
+#chat-panel{display:none;flex-direction:column;height:100%;overflow:hidden}
+#chat-panel.active{display:flex}
+#chat-header{
+  padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+#chat-visitor-name{font-weight:700;font-size:15px;color:var(--text)}
+#chat-visitor-info{font-size:12px;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:10px}
+#takeover-btn{
+  background:rgba(52,152,219,.2);border:1px solid rgba(52,152,219,.4);
+  color:var(--blue);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;
+  transition:.2s;font-family:'Inter',sans-serif;
+}
+#takeover-btn:hover{background:rgba(52,152,219,.4)}
+#takeover-btn.active-takeover{background:rgba(231,76,60,.2);border-color:rgba(231,76,60,.4);color:var(--red)}
+#chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-msg{display:flex;gap:10px;max-width:80%}
+.chat-msg.user{margin-left:auto;flex-direction:row-reverse}
+.chat-msg.human_agent{margin-left:auto;flex-direction:row-reverse}
+.chat-bubble{padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5;word-wrap:break-word}
+.chat-msg.agent .chat-bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.chat-msg.user .chat-bubble{background:linear-gradient(135deg,#2d1b4e,#4a2c6e);color:var(--text);border-bottom-right-radius:4px}
+.chat-msg.human_agent .chat-bubble{background:linear-gradient(135deg,rgba(52,152,219,.4),rgba(52,152,219,.2));color:white;border:1px solid rgba(52,152,219,.4);border-bottom-right-radius:4px}
+.chat-role{font-size:10px;color:var(--text3);margin-bottom:3px}
+.chat-time{font-size:10px;color:var(--text3);margin-top:3px}
+
+#admin-reply-area{padding:14px 20px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-shrink:0}
+#admin-reply-area.visible{display:block}
+#admin-reply-row{display:flex;gap:10px}
+#admin-reply-input{
+  flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:10px 16px;color:var(--text);font-size:13px;outline:none;resize:none;
+  font-family:'Inter',sans-serif;transition:border-color .2s;max-height:80px;
+}
+#admin-reply-input:focus{border-color:rgba(52,152,219,.5)}
+#admin-reply-btn{
+  background:linear-gradient(135deg,rgba(52,152,219,.8),rgba(52,152,219,1));
+  border:none;border-radius:12px;padding:10px 20px;color:white;font-weight:600;
+  cursor:pointer;font-size:13px;transition:.2s;font-family:'Inter',sans-serif;white-space:nowrap;
+}
+#admin-reply-btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(52,152,219,.4)}
+#no-chat{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;flex-direction:column;gap:12px}
+#no-chat .icon{font-size:48px;opacity:.3}
+
+/* LEADS PANEL */
+#leads-panel{padding:20px;overflow-y:auto}
+.leads-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.leads-toolbar h2{font-size:18px;font-weight:700;color:var(--text)}
+#export-btn{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;
+  border-radius:10px;padding:8px 18px;color:#1a0a0a;font-weight:700;cursor:pointer;
+  font-size:13px;transition:.2s;font-family:'Inter',sans-serif;
+}
+#export-btn:hover{opacity:.9}
+.leads-table{width:100%;border-collapse:collapse}
+.leads-table th{background:var(--surface2);color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:10px 14px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+.leads-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;color:var(--text)}
+.leads-table tr:hover td{background:rgba(255,255,255,.02)}
+.leads-empty{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+
+/* SETTINGS PANEL */
+#settings-panel{padding:24px;overflow-y:auto}
+#settings-panel h2{font-size:18px;font-weight:700;margin-bottom:20px;color:var(--text)}
+.settings-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.settings-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--accent)}
+.settings-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block}
+.settings-textarea{
+  width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:10px;
+  padding:12px;color:var(--text);font-size:13px;outline:none;resize:vertical;min-height:120px;
+  font-family:'Inter',sans-serif;line-height:1.5;
+}
+.settings-textarea:focus{border-color:var(--accent)}
+.settings-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.toggle-label{font-size:14px;color:var(--text)}
+.toggle{position:relative;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#333;border-radius:12px;cursor:pointer;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px)}
+.settings-save-btn{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;
+  border-radius:10px;padding:10px 24px;color:#1a0a0a;font-weight:700;cursor:pointer;
+  font-size:14px;margin-top:12px;transition:.2s;font-family:'Inter',sans-serif;
+}
+.settings-save-btn:hover{opacity:.9}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 20px;font-size:13px;color:var(--text);transition:.3s;z-index:99999;
+  pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:rgba(46,204,113,.4);color:var(--green)}
+#toast.error{border-color:rgba(231,76,60,.4);color:var(--red)}
+
+/* Notification pulse */
+.session-item.new-msg{animation:newmsg .5s ease}
+@keyframes newmsg{0%,100%{background:var(--surface2)}50%{background:rgba(200,168,75,.12)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🌙</div>
+    <div class="login-title">IDLMatch Admin</div>
+    <div class="login-sub">Matrimonial Chat Management Dashboard</div>
+    <input class="login-input" type="password" id="login-password" placeholder="Enter admin password" />
+    <button class="login-btn" id="login-btn">Sign In</button>
+    <div class="login-error" id="login-error">❌ Invalid password. Try again.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="topbar-logo">
+      <span class="topbar-logo-icon">🌙</span>
+      IDLMatch Admin
+    </div>
+    <span class="topbar-site">idlmatch.com</span>
+    <div class="topbar-status"><span class="status-dot"></span> Live</div>
+    <button id="logout-btn">Sign Out</button>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-stats" id="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="stat-sessions">0</div><div class="stat-label">Total Chats</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-today">0</div><div class="stat-label">Today</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-leads">0</div><div class="stat-label">Leads</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-escalated">0</div><div class="stat-label">Escalated</div></div>
+    </div>
+    <div class="sidebar-section-label">Live Conversations</div>
+    <div id="session-list"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No conversations yet</div></div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div id="main-panel">
+    <div id="tab-bar">
+      <div class="tab active" data-tab="chat">💬 Chat Monitor</div>
+      <div class="tab" data-tab="leads">🎯 Leads</div>
+      <div class="tab" data-tab="settings">⚙️ Settings</div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div class="panel active" id="chat-tab-panel">
+      <div id="chat-panel">
+        <div id="chat-header">
+          <div>
+            <div id="chat-visitor-name">Select a conversation</div>
+            <div style="font-size:12px;color:var(--text2)" id="chat-visitor-email"></div>
+          </div>
+          <div id="chat-visitor-info">
+            <button id="takeover-btn">🤝 Take Over</button>
+            <button id="release-btn" style="background:rgba(46,204,113,.2);border:1px solid rgba(46,204,113,.4);color:var(--green);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;display:none;font-family:Inter,sans-serif">🤖 Release to AI</button>
+          </div>
+        </div>
+        <div id="chat-messages">
+          <div id="no-chat"><div class="icon">💬</div><span>Select a conversation from the sidebar</span></div>
+        </div>
+        <div id="admin-reply-area">
+          <div id="admin-reply-row">
+            <textarea id="admin-reply-input" placeholder="Type your reply as human agent..." rows="1"></textarea>
+            <button id="admin-reply-btn">Send Reply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADS TAB -->
+    <div class="panel" id="leads-tab-panel">
+      <div id="leads-panel">
+        <div class="leads-toolbar">
+          <h2>🎯 Captured Leads</h2>
+          <button id="export-btn">📥 Export CSV</button>
+        </div>
+        <table class="leads-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Country</th><th>Date</th></tr></thead>
+          <tbody id="leads-tbody"><tr><td colspan="5" class="leads-empty">No leads captured yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="panel" id="settings-tab-panel">
+      <div id="settings-panel">
+        <h2>⚙️ Agent Settings</h2>
+        <div class="settings-card">
+          <h3>Agent Status</h3>
+          <div class="settings-toggle">
+            <span class="toggle-label">AI Agent Active</span>
+            <label class="toggle"><input type="checkbox" id="agent-toggle" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-toggle">
+            <span class="toggle-label">Auto-reply enabled</span>
+            <label class="toggle"><input type="checkbox" id="autoreply-toggle" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Custom FAQs (add Q&amp;A pairs)</h3>
+          <label class="settings-label">Add knowledge to Noor's responses:</label>
+          <textarea class="settings-textarea" id="custom-faq" placeholder="Q: What is the premium membership price?&#10;A: Premium membership costs $X per month...&#10;&#10;Q: How do I contact support?&#10;A: ..."></textarea>
+          <button class="settings-save-btn">Save Settings</button>
+        </div>
+        <div class="settings-card">
+          <h3>Embed Widget on Your Website</h3>
+          <label class="settings-label">Paste this code before &lt;/body&gt; on idlmatch.com:</label>
+          <textarea class="settings-textarea" readonly id="embed-code" style="font-family:monospace;font-size:12px;min-height:60px"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Toast message</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const API = '';
+let token = '';
+let socket = null;
+let activeSession = null;
+let sessions = {};
+let isTakeover = false;
+
+// ── LOGIN ──────────────────────────────────────────────
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+
+async function login() {
+  const pw = document.getElementById('login-password').value;
+  const res = await fetch('/api/admin/login', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw })
+  });
+  const data = await res.json();
+  if(data.success) {
+    token = data.token;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    initAdmin();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  token = ''; location.reload();
+});
+
+// ── INIT ───────────────────────────────────────────────
+function initAdmin() {
+  initSocket();
+  loadSessions();
+  loadLeads();
+  loadStats();
+  setInterval(loadStats, 15000);
+
+  // embed code
+  document.getElementById('embed-code').value = `<script src="${location.origin}/widget.js"><\/script>`;
+}
+
+function initSocket() {
+  socket = io({ transports:['websocket','polling'] });
+  socket.emit('admin_join', { token });
+
+  socket.on('admin_session_update', (data) => {
+    loadSessions();
+    showToast('🌟 New visitor started a chat', 'success');
+  });
+
+  socket.on('admin_new_message', (data) => {
+    if(data.sessionId === activeSession) {
+      appendChatMessage(data.role, data.content, data.timestamp || new Date().toISOString());
+    }
+    const item = document.querySelector(`.session-item[data-id="${data.sessionId}"]`);
+    if(item) {
+      item.classList.add('new-msg');
+      setTimeout(()=>item.classList.remove('new-msg'),500);
+      item.querySelector('.session-preview').textContent = data.content;
+    } else {
+      loadSessions();
+    }
+  });
+
+  socket.on('admin_new_lead', (data) => {
+    showToast(`🎯 New lead: ${data.name} (${data.email})`, 'success');
+    loadLeads();
+    loadStats();
+  });
+
+  socket.on('admin_escalation', (data) => {
+    showToast(`🚨 Escalation requested in session ${data.sessionId.slice(0,8)}`, 'error');
+    const item = document.querySelector(`.session-item[data-id="${data.sessionId}"]`);
+    if(item) item.classList.add('escalated');
+  });
+
+  socket.on('admin_needs_reply', (data) => {
+    if(data.sessionId === activeSession) {
+      showToast('⚡ Visitor is waiting for your reply!', 'success');
+    }
+  });
+}
+
+// ── SESSIONS ───────────────────────────────────────────
+async function loadSessions() {
+  const res = await fetch('/api/admin/sessions', { headers:{ 'x-admin-token': token }});
+  const list = await res.json();
+  renderSessions(list);
+}
+
+function renderSessions(list) {
+  const container = document.getElementById('session-list');
+  if(!list.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No conversations yet</div>';
+    return;
+  }
+  container.innerHTML = '';
+  list.forEach(s => {
+    sessions[s.id] = s;
+    const div = document.createElement('div');
+    div.className = `session-item${s.is_escalated?' escalated':''}${s.id===activeSession?' active':''}`;
+    div.dataset.id = s.id;
+    const time = s.last_active ? new Date(s.last_active).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    div.innerHTML = `
+      <div class="session-header">
+        <span class="session-name">${s.visitor_name||'Visitor'}</span>
+        <span class="session-time">${time}</span>
+      </div>
+      <div class="session-preview">${s.last_message||'...'}</div>
+      <div class="session-badges">
+        ${s.is_escalated?'<span class="badge badge-escalated">⚠ Escalated</span>':''}
+        ${s.is_human_taking_over?'<span class="badge badge-human">👤 Human</span>':''}
+        ${s.lead_email?'<span class="badge badge-lead">🎯 Lead</span>':''}
+      </div>
+    `;
+    div.addEventListener('click', () => openSession(s.id));
+    container.appendChild(div);
+  });
+}
+
+async function openSession(id) {
+  activeSession = id;
+  isTakeover = sessions[id]?.is_human_taking_over == 1;
+  document.querySelectorAll('.session-item').forEach(el=>el.classList.toggle('active',el.dataset.id===id));
+  
+  const s = sessions[id];
+  document.getElementById('chat-visitor-name').textContent = s?.visitor_name || `Visitor`;
+  document.getElementById('chat-visitor-email').textContent = s?.lead_email || 'No email yet';
+  
+  updateTakeoverUI();
+
+  const res = await fetch(`/api/admin/sessions/${id}/messages`, { headers:{ 'x-admin-token': token }});
+  const msgs = await res.json();
+  
+  const chatMsgs = document.getElementById('chat-messages');
+  chatMsgs.innerHTML = '';
+  msgs.forEach(m => appendChatMessage(m.role, m.content, m.timestamp));
+  setTimeout(()=>chatMsgs.scrollTop=chatMsgs.scrollHeight,50);
+}
+
+function appendChatMessage(role, content, timestamp) {
+  const chatMsgs = document.getElementById('chat-messages');
+  const noChat = document.getElementById('no-chat');
+  if(noChat) noChat.remove();
+
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const time = timestamp ? new Date(timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+  const roleLabel = role==='agent'?'🤖 Noor (AI)':role==='human_agent'?'👤 You (Admin)':'👤 Visitor';
+  div.innerHTML = `
+    <div>
+      <div class="chat-role">${roleLabel}</div>
+      <div class="chat-bubble">${escHtml(content).replace(/\n/g,'<br>').replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" style="color:var(--accent)">$1</a>')}</div>
+      <div class="chat-time">${time}</div>
+    </div>
+  `;
+  chatMsgs.appendChild(div);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+}
+
+// ── TAKEOVER ───────────────────────────────────────────
+document.getElementById('takeover-btn').addEventListener('click', async () => {
+  if(!activeSession) return;
+  await fetch(`/api/admin/sessions/${activeSession}/takeover`, { method:'POST', headers:{'x-admin-token':token}});
+  isTakeover = true;
+  sessions[activeSession].is_human_taking_over = 1;
+  updateTakeoverUI();
+  showToast('✅ You took over the conversation', 'success');
+});
+
+document.getElementById('release-btn').addEventListener('click', async () => {
+  if(!activeSession) return;
+  await fetch(`/api/admin/sessions/${activeSession}/release`, { method:'POST', headers:{'x-admin-token':token}});
+  isTakeover = false;
+  sessions[activeSession].is_human_taking_over = 0;
+  updateTakeoverUI();
+  showToast('🤖 AI agent resumed', 'success');
+});
+
+function updateTakeoverUI() {
+  document.getElementById('takeover-btn').style.display = isTakeover ? 'none' : 'block';
+  document.getElementById('release-btn').style.display = isTakeover ? 'block' : 'none';
+  document.getElementById('admin-reply-area').classList.toggle('visible', isTakeover);
+}
+
+// Admin reply
+document.getElementById('admin-reply-btn').addEventListener('click', sendAdminReply);
+document.getElementById('admin-reply-input').addEventListener('keydown', e => {
+  if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendAdminReply(); }
+});
+
+async function sendAdminReply() {
+  const input = document.getElementById('admin-reply-input');
+  const msg = input.value.trim();
+  if(!msg || !activeSession) return;
+  await fetch(`/api/admin/reply/${activeSession}`, {
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-token':token},
+    body: JSON.stringify({ message: msg })
+  });
+  input.value = '';
+}
+
+// ── LEADS ──────────────────────────────────────────────
+async function loadLeads() {
+  const res = await fetch('/api/admin/leads', { headers:{'x-admin-token':token}});
+  const leads = await res.json();
+  const tbody = document.getElementById('leads-tbody');
+  if(!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="leads-empty">No leads captured yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => `
+    <tr>
+      <td>${escHtml(l.name||'—')}</td>
+      <td>${escHtml(l.email||'—')}</td>
+      <td>${escHtml(l.phone||'—')}</td>
+      <td>${escHtml(l.country||'—')}</td>
+      <td>${l.created_at ? new Date(l.created_at).toLocaleDateString() : '—'}</td>
+    </tr>
+  `).join('');
+
+  // Export CSV
+  document.getElementById('export-btn').onclick = () => {
+    const rows = [['Name','Email','Phone','Country','Date'],...leads.map(l=>[l.name,l.email,l.phone,l.country,l.created_at])];
+    const csv = rows.map(r=>r.map(c=>`"${(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download = 'idlmatch-leads.csv'; a.click();
+  };
+}
+
+// ── STATS ──────────────────────────────────────────────
+async function loadStats() {
+  const res = await fetch('/api/admin/stats', { headers:{'x-admin-token':token}});
+  const stats = await res.json();
+  document.getElementById('stat-sessions').textContent = stats.totalSessions;
+  document.getElementById('stat-today').textContent = stats.todaySessions;
+  document.getElementById('stat-leads').textContent = stats.totalLeads;
+  document.getElementById('stat-escalated').textContent = stats.escalated;
+}
+
+// ── TABS ───────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`${tab.dataset.tab}-tab-panel`).classList.add('active');
+  });
+});
+
+// ── UTILS ──────────────────────────────────────────────
+function escHtml(t='') { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(()=>t.className='',3500);
+}
+</script>
+</body>
+</html>

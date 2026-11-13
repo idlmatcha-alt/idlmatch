@@ -1,0 +1,43 @@
+
+# IDL-DEPLOY-SECURITY - block application internals
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # /storage/* -> PHP streamer when the symlink is unavailable
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^storage/(.+)$ storage-serve.php [L]
+
+    RewriteCond %{THE_REQUEST} \s/+public/([^\s?]*) [NC]
+    RewriteRule ^ /%1 [L,R=301]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^(?!public/)(.*)$ public/$1 [L]
+
+    RewriteRule ^(app|bootstrap|config|database|lang|resources|routes|tests|_local|_snapshot_old|\.git|storage_old)(\.\d+)?(/|$) - [F,L]
+
+    RewriteRule ^(\.env.*|artisan|composer\.(json|lock)|phpunit\.xml|package(-lock)?\.json|vite\.config\.js|tailwind\.config\.js|postcss\.config\.js|dg2\.php|mg_debug\.php|symlink\.php|diagnostic2?\.php)$ - [F,L]
+    RewriteRule ^.*\.(md|zip|log|sql|bak|sh|yml|yaml|ini)$ - [F,L]
+    RewriteRule \.backup(-\d{8}_\d{6})?$ - [F,L]
+</IfModule>
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
